@@ -1,0 +1,16 @@
+# Secrets
+**/.tls/
+**/*.key
+authorized_keys
+
+# Runtime / generated files
+topology-data.json
+
+# Ansible / Nornir generated inventories
+ansible-inventory.yml
+nornir-simple-inventory.yml
+
+# OS junk
+.DS_Store
+*.swp
+
