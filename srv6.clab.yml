@@ -1,4 +1,4 @@
-name: srv6-test
+name: srv6-static-te-r1-r8
 prefix: ""
 
 mgmt:
@@ -26,22 +26,26 @@ topology:
         - ip -6 addr add 2001:db8:0:13::/127 dev eth2
         - ip addr add 10.1.1.2/24 dev eth5
         # Создаем правило, чтобы маршруты для префикса, лукапилось в таблице localsid
-        - ip -6 rule add to fc00:1::/64 lookup localsid
+        - ip -6 rule add to 5f00:0:1::/64 lookup localsid
         # Создаем blackhole в таблице localsid, чтобы отбрасывать все пакеты, предназначенные для адресов в диапазоне localsid, но без явного совпадения
         - ip -6 route add blackhole default table localsid
         # Создаем маршрут в основной таблице маршрутизации для блока localsid, чтобы его можно было объявить в uderlay
-        - ip -6 route add blackhole fc00:1::/64
-        # encap route
-        - ip -6 route add fc00:1::4 encap seg6local action End.DX4 nh4 10.1.1.1 dev eth5 table localsid
-        # decap route 
-        - ip route add 10.8.8.0/24 encap seg6 mode encap segs fc00:2::1,fc00:8::4 dev eth2
-        # End для транзитного трафика, снимает в SRH последний seg и передает дальше на обработку в re
-        - ip -6 route add fc00:1::1 encap seg6local action End dev eth5 table localsid
+        - ip -6 route add blackhole 5f00:0:1::/64
+        # decap route
+        - "ip -6 route add 5f00:0:1:0:e4:: encap seg6local action End.DX4 nh4 10.1.1.1 dev eth5 table localsid"
+        # encap route 
+        - "ip route add 10.8.8.0/24 encap seg6 mode encap segs 5f00:0:2:0:ed::,5f00:0:8:0:e4:: dev eth2"
+        # End для транзитного трафика, снимает в SRH последний seg и передает дальше на обработку
+        - "ip -6 route add 5f00:0:1:0:ed:: encap seg6local action End dev eth5 table localsid"
       binds:
         - frr1/daemons:/etc/frr/daemons
         - frr1/frr.conf:/etc/frr/frr.conf
         # Таблица localsid создается для хранения и обработки локальных SRv6 SID и реализации endpoint действий SRv6 на маршрутизаторе
         - iproute2/rt_tables:/etc/iproute2/rt_tables
+      labels:
+        graph-posX: "425"
+        graph-posY: "215"
+        graph-groupLabelPos: bottom-center
 
     frr2:
       kind: linux
@@ -63,15 +67,19 @@ topology:
 
         - ip addr add 10.2.2.2/24 dev eth5
 
-        - ip -6 rule add to fc00:2::/64 lookup localsid
+        - ip -6 rule add to 5f00:0:2::/64 lookup localsid
         - ip -6 route add blackhole default table localsid
-        - ip -6 route add blackhole fc00:2::/64
+        - ip -6 route add blackhole 5f00:0:2::/64
         # End for forward
-        - ip -6 route add fc00:2::1 encap seg6local action End dev eth5 table localsid
+        - "ip -6 route add 5f00:0:2:0:ed:: encap seg6local action End dev eth5 table localsid"
       binds:
         - frr2/daemons:/etc/frr/daemons
         - frr2/frr.conf:/etc/frr/frr.conf
         - iproute2/rt_tables:/etc/iproute2/rt_tables
+      labels:
+        graph-posX: "505"
+        graph-posY: "285"
+        graph-groupLabelPos: bottom-center
 
     frr3:
       kind: linux
@@ -93,15 +101,19 @@ topology:
 
         - ip addr add 10.3.3.2/24 dev eth5
 
-        - ip -6 rule add to fc00:3::/64 lookup localsid
+        - ip -6 rule add to 5f00:0:3::/64 lookup localsid
         - ip -6 route add blackhole default table localsid
-        - ip -6 route add blackhole fc00:3::/64
+        - ip -6 route add blackhole 5f00:0:3::/64
         # End for forward
-        - ip -6 route add fc00:3::1 encap seg6local action End dev eth5 table localsid
+        - "ip -6 route add 5f00:0:3:0:ed:: encap seg6local action End dev eth5 table localsid"
       binds:
         - frr3/daemons:/etc/frr/daemons
         - frr3/frr.conf:/etc/frr/frr.conf
         - iproute2/rt_tables:/etc/iproute2/rt_tables
+      labels:
+        graph-posX: "505"
+        graph-posY: "155"
+        graph-groupLabelPos: bottom-center
 
     frr4:
       kind: linux
@@ -120,6 +132,10 @@ topology:
       binds:
         - frr4/daemons:/etc/frr/daemons
         - frr4/frr.conf:/etc/frr/frr.conf
+      labels:
+        graph-posX: "635"
+        graph-posY: "155"
+        graph-groupLabelPos: bottom-center
 
     frr5:
       kind: linux
@@ -138,6 +154,10 @@ topology:
       binds:
         - frr5/daemons:/etc/frr/daemons
         - frr5/frr.conf:/etc/frr/frr.conf
+      labels:
+        graph-posX: "635"
+        graph-posY: "285"
+        graph-groupLabelPos: bottom-center
 
     frr6:
       kind: linux
@@ -160,16 +180,20 @@ topology:
 
         - ip addr add 10.6.6.2/24 dev eth5
 
-        - ip -6 rule add to fc00:6::/64 lookup localsid
+        - ip -6 rule add to 5f00:0:6::/64 lookup localsid
         - ip -6 route add blackhole default table localsid
-        - ip -6 route add blackhole fc00:6::/64
+        - ip -6 route add blackhole 5f00:0:6::/64
         # End for forward
-        - ip -6 route add fc00:6::1 encap seg6local action End dev eth5 table localsid
+        - "ip -6 route add 5f00:0:6:0:ed:: encap seg6local action End dev eth5 table localsid"
       binds:
         - frr6/daemons:/etc/frr/daemons
         - frr6/frr.conf:/etc/frr/frr.conf
         - iproute2/rt_tables:/etc/iproute2/rt_tables
-  
+      labels:
+        graph-posX: "765"
+        graph-posY: "285"
+        graph-groupLabelPos: bottom-center
+
     frr7:
       kind: linux
       image: quay.io/frrouting/frr:master
@@ -191,15 +215,19 @@ topology:
 
         - ip addr add 10.7.7.2/24 dev eth5
 
-        - ip -6 rule add to fc00:7::/64 lookup localsid
+        - ip -6 rule add to 5f00:0:7::/64 lookup localsid
         - ip -6 route add blackhole default table localsid
-        - ip -6 route add blackhole fc00:7::/64
+        - ip -6 route add blackhole 5f00:0:7::/64
         # End for forward
-        - ip -6 route add fc00:7::1 encap seg6local action End dev eth5 table localsid
+        - "ip -6 route add 5f00:0:7:0:ed:: encap seg6local action End dev eth5 table localsid"
       binds:
         - frr7/daemons:/etc/frr/daemons
         - frr7/frr.conf:/etc/frr/frr.conf
         - iproute2/rt_tables:/etc/iproute2/rt_tables
+      labels:
+        graph-posX: "755"
+        graph-posY: "155"
+        graph-groupLabelPos: bottom-center
 
     frr8:
       kind: linux
@@ -219,19 +247,23 @@ topology:
 
         - ip addr add 10.8.8.2/24 dev eth5
 
-        - ip -6 rule add to fc00:8::/64 lookup localsid
+        - ip -6 rule add to 5f00:0:8::/64 lookup localsid
         - ip -6 route add blackhole default table localsid
-        - ip -6 route add blackhole fc00:8::/64
-        # decap
-        - ip -6 route add fc00:8::4 encap seg6local action End.DX4 nh4 10.8.8.1 dev eth5 table localsid
+        - ip -6 route add blackhole 5f00:0:8::/64
         # encap
-        - ip route add 10.1.1.0/24 encap seg6 mode encap segs fc00:6::1,fc00:1::4 dev eth2
+        - "ip -6 route add 5f00:0:8:0:e4:: encap seg6local action End.DX4 nh4 10.8.8.1 dev eth5 table localsid"
+        # decap
+        - "ip route add 10.1.1.0/24 encap seg6 mode encap segs 5f00:0:6:0:ed::,5f00:0:1:0:e4:: dev eth2"
         # End
-        - ip -6 route add fc00:8::1 encap seg6local action End dev eth5 table localsid
+        - "ip -6 route add 5f00:0:8:0:ed:: encap seg6local action End dev eth5 table localsid"
       binds:
         - frr8/daemons:/etc/frr/daemons
         - frr8/frr.conf:/etc/frr/frr.conf
         - iproute2/rt_tables:/etc/iproute2/rt_tables
+      labels:
+        graph-posX: "845"
+        graph-posY: "215"
+        graph-groupLabelPos: bottom-center
 
     PC1:
       kind: linux
@@ -242,6 +274,10 @@ topology:
         - ip link set eth1 up
         - ip addr add 10.1.1.1/24 dev eth1
         - ip route add 10.0.0.0/8 via 10.1.1.2 dev eth1
+      labels:
+        graph-posX: "355"
+        graph-posY: "215"
+        graph-groupLabelPos: bottom-center
 
     PC2:
       kind: linux
@@ -252,6 +288,10 @@ topology:
         - ip link set eth1 up
         - ip addr add 10.2.2.1/24 dev eth1
         - ip route add 10.0.0.0/8 via 10.2.2.2 dev eth1
+      labels:
+        graph-posX: "505"
+        graph-posY: "365"
+        graph-groupLabelPos: bottom-center
 
     PC3:
       kind: linux
@@ -262,6 +302,10 @@ topology:
         - ip link set eth1 up
         - ip addr add 10.3.3.1/24 dev eth1
         - ip route add 10.0.0.0/8 via 10.3.3.2 dev eth1
+      labels:
+        graph-posX: "505"
+        graph-posY: "75"
+        graph-groupLabelPos: bottom-center
 
     PC6:
       kind: linux
@@ -272,6 +316,10 @@ topology:
         - ip link set eth1 up
         - ip addr add 10.6.6.1/24 dev eth1
         - ip route add 10.0.0.0/8 via 10.6.6.2 dev eth1
+      labels:
+        graph-posX: "765"
+        graph-posY: "365"
+        graph-groupLabelPos: bottom-center
 
     PC7:
       kind: linux
@@ -282,6 +330,10 @@ topology:
         - ip link set eth1 up
         - ip addr add 10.7.7.1/24 dev eth1
         - ip route add 10.0.0.0/8 via 10.7.7.2 dev eth1
+      labels:
+        graph-posX: "755"
+        graph-posY: "75"
+        graph-groupLabelPos: bottom-center
 
     PC8:
       kind: linux
@@ -292,23 +344,27 @@ topology:
         - ip link set eth1 up
         - ip addr add 10.8.8.1/24 dev eth1
         - ip route add 10.0.0.0/8 via 10.8.8.2 dev eth1
+      labels:
+        graph-posX: "935"
+        graph-posY: "215"
+        graph-groupLabelPos: bottom-center
 
   links:
-      - endpoints: [ "frr1:eth1", "frr2:eth1" ]
-      - endpoints: [ "frr1:eth2", "frr3:eth2" ]
-      - endpoints: [ "frr2:eth2", "frr4:eth2" ]
-      - endpoints: [ "frr2:eth3", "frr5:eth3" ]
-      - endpoints: [ "frr3:eth3", "frr4:eth3" ]
-      - endpoints: [ "frr3:eth1", "frr5:eth1" ]
-      - endpoints: [ "frr4:eth1", "frr6:eth1" ]
-      - endpoints: [ "frr4:eth4", "frr7:eth4" ]
-      - endpoints: [ "frr5:eth4", "frr6:eth4" ]
-      - endpoints: [ "frr7:eth1", "frr8:eth1" ] 
-      - endpoints: [ "frr5:eth2", "frr7:eth2" ]
-      - endpoints: [ "frr6:eth2", "frr8:eth2" ]
-      - endpoints: [ "frr1:eth5", "PC1:eth1" ]
-      - endpoints: [ "frr2:eth5", "PC2:eth1" ]
-      - endpoints: [ "frr3:eth5", "PC3:eth1" ]
-      - endpoints: [ "frr6:eth5", "PC6:eth1" ]
-      - endpoints: [ "frr7:eth5", "PC7:eth1" ]
-      - endpoints: [ "frr8:eth5", "PC8:eth1" ]
+    - endpoints: [ "frr1:eth1", "frr2:eth1" ]
+    - endpoints: [ "frr1:eth2", "frr3:eth2" ]
+    - endpoints: [ "frr2:eth2", "frr4:eth2" ]
+    - endpoints: [ "frr2:eth3", "frr5:eth3" ]
+    - endpoints: [ "frr3:eth3", "frr4:eth3" ]
+    - endpoints: [ "frr3:eth1", "frr5:eth1" ]
+    - endpoints: [ "frr4:eth1", "frr6:eth1" ]
+    - endpoints: [ "frr4:eth4", "frr7:eth4" ]
+    - endpoints: [ "frr5:eth4", "frr6:eth4" ]
+    - endpoints: [ "frr7:eth1", "frr8:eth1" ]
+    - endpoints: [ "frr5:eth2", "frr7:eth2" ]
+    - endpoints: [ "frr6:eth2", "frr8:eth2" ]
+    - endpoints: [ "frr1:eth5", "PC1:eth1" ]
+    - endpoints: [ "frr2:eth5", "PC2:eth1" ]
+    - endpoints: [ "frr3:eth5", "PC3:eth1" ]
+    - endpoints: [ "frr6:eth5", "PC6:eth1" ]
+    - endpoints: [ "frr7:eth5", "PC7:eth1" ]
+    - endpoints: [ "frr8:eth5", "PC8:eth1" ]
